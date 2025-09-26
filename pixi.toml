@@ -1,0 +1,12 @@
+[workspace]
+authors = ["Jan Wehner <jan.wehner@awi.de>"]
+channels = ["conda-forge"]
+name = "render_geotiff"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+tifffile = ">=2025.9.20,<2026"
+matplotlib = ">=3.10.6,<4"
