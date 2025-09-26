@@ -231,13 +231,7 @@ else:
 args.locations = [s.strip() for s in args.locations.split(",")]
 
 # B) Color Selection - Choose from individual or common libraries
-DISPLAY_COLOR = args.variable # SCIENTIFIC BEST PRACTICES:
-                              # For most data: "viridis", "plasma", "cividis" (perceptually uniform)
-                              # For temperature anomalies: "coolwarm", "RdBu_r" (diverging)  
-                              # For precipitation: "Blues", "BuGn", "jw_precip"
-                              # For elevation: "terrain", "gist_earth", "earth_tones"
-                              # Custom: "jw_precip", "jw_temp", "fire", "ocean_depth"
-                              # Original: "precipitation", "temperature", "precip_dif", "temp_dif"
+DISPLAY_COLOR = args.variable 
 
 # C) Map Range Settings
 MAP_RANGE = {
@@ -295,9 +289,10 @@ CONTINENT_POSITIONS = {
 
 # Interest point camera positions (lat, lon in degrees)
 INTEREST_POSITIONS = {
-    "Marrakech_Atlas": (31.6, -8.0),     # Marrakech-Atlas Mountains
-    "Congo_River": (0, 18),              # Congo River basin
-    "Himalayas": (28, 87)                # Himalayas region
+    "Marrakech_Atlas": (31.6, -8.0),
+    "Congo_River": (0, 18),
+    "Himalayas": (28, 87),               
+    "Bremen": (53.08, 8.80)
 }
 
 # G) Robinson-specific settings
