@@ -4,15 +4,234 @@ import glob
 import math
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+import argparse
+
+CUSTOM_COLOR_RAMPS = {
+    # Original climate data color schemes
+    "precipitation": [
+        (0.0, [0.0, 0.0, 0.0, 1.0]),
+        (0.05263155698776245, [0.061205919831991196, 0.0037467454094439745, 0.13492080569267273, 1.0]),
+        (0.10526317358016968, [0.06187712028622627, 0.01448772568255663, 0.18247292935848236, 1.0]),
+        (0.15789473056793213, [0.05637719854712486, 0.03366807848215103, 0.22444787621498108, 1.0]),
+        (0.21052634716033936, [0.0475434735417366, 0.058084726333618164, 0.25060197710990906, 1.0]),
+        (0.2631579041481018, [0.0371728353202343, 0.09017402678728104, 0.26632359623908997, 1.0]),
+        (0.31578946113586426, [0.028809722512960434, 0.12429725378751755, 0.2734186053276062, 1.0]),
+        (0.3684210777282715, [0.021840587258338928, 0.16534572839736938, 0.27672967314720154, 1.0]),
+        (0.42105263471603394, [0.016847146674990654, 0.20782506465911865, 0.2770037353038788, 1.0]),
+        (0.4736841917037964, [0.012492450885474682, 0.25902366638183594, 0.2732461988925934, 1.0]),
+        (0.5263158082962036, [0.009742427617311478, 0.3121352791786194, 0.2637326419353485, 1.0]),
+        (0.5789473652839661, [0.010268782265484333, 0.3752182126045227, 0.24440304934978485, 1.0]),
+        (0.6315789222717285, [0.018240107223391533, 0.43827247619628906, 0.21680444478988647, 1.0]),
+        (0.6842105388641357, [0.04304962232708931, 0.5088575482368469, 0.17744702100753784, 1.0]),
+        (0.7368420958518982, [0.09070251882076263, 0.5740482211112976, 0.13471432030200958, 1.0]),
+        (0.7894737124443054, [0.18001516163349152, 0.639945924282074, 0.08708430826663971, 1.0]),
+        (0.8421052694320679, [0.3082120418548584, 0.6933635473251343, 0.04732321947813034, 1.0]),
+        (0.8947368264198303, [0.5017335414886475, 0.7396805882453918, 0.016790039837360382, 1.0]),
+        (0.9473684430122375, [0.7287082672119141, 0.7735996842384338, 0.00576141057536006, 1.0]),
+        (1.0, [0.9852057695388794, 0.8050958514213562, 0.014059592969715595, 1.0])
+    ],
+    
+    "temperature": [
+        (0.0, [0.0, 0.0, 0.0, 1.0]),
+        (0.05263155698776245, [0.003496936522424221, 0.0, 0.0, 1.0]),
+        (0.10526317358016968, [0.01606770046055317, 0.0, 0.0, 1.0]),
+        (0.15789473056793213, [0.041451890021562576, 0.0, 0.0, 1.0]),
+        (0.21052634716033936, [0.07698733359575272, 0.0, 0.0, 1.0]),
+        (0.2631579041481018, [0.12893681228160858, 0.0, 0.0, 1.0]),
+        (0.31578946113586426, [0.1904628723859787, 0.0, 0.0, 1.0]),
+        (0.3684210777282715, [0.2715774178504944, 0.0, 0.0, 1.0]),
+        (0.42105263471603394, [0.36112427711486816, 0.0, 0.0, 1.0]),
+        (0.4736841917037964, [0.47330400347709656, 0.0, 0.0, 1.0]),
+        (0.5263158082962036, [0.5924380421638489, 0.0014331345446407795, 0.0, 1.0]),
+        (0.5789473652839661, [0.7372047901153564, 0.017936432734131813, 0.0, 1.0]),
+        (0.6315789222717285, [0.8872158527374268, 0.05284162610769272, 0.0, 1.0]),
+        (0.6842105388641357, [1.0, 0.11392093449831009, 0.0, 1.0]),
+        (0.7368420958518982, [1.0, 0.1939721703529358, 0.0, 1.0]),
+        (0.7894737124443054, [1.0, 0.3066347539424896, 0.019917838275432587, 1.0]),
+        (0.8421052694320679, [1.0, 0.43681275844573975, 0.11392093449831009, 1.0]),
+        (0.8947368264198303, [1.0, 0.6054843068122864, 0.3157627582550049, 1.0]),
+        (0.9473684430122375, [1.0, 0.7893137335777283, 0.6054843068122864, 1.0]),
+        (1.0, [1.0, 1.0, 1.0, 1.0])
+    ],
+    
+    "precip_dif": [
+        (0.0, [1.0, 1.0, 1.0, 1.0]),
+        (0.055555541068315506, [1.0, 0.5795466303825378, 0.28012436628341675, 1.0]),
+        (0.1111111119389534, [1.0, 0.28012436628341675, 0.00969632901251316, 1.0]),
+        (0.1666666567325592, [1.0, 0.08919350802898407, 0.0, 1.0]),
+        (0.2222222238779068, [0.6730490922927856, 0.008373118005692959, 0.0, 1.0]),
+        (0.2777777910232544, [0.4071786105632782, 0.0, 0.0, 1.0]),
+        (0.3333333432674408, [0.21763764321804047, 0.0, 0.0, 1.0]),
+        (0.3888888955116272, [0.08690125495195389, 0.0, 0.0, 1.0]),
+        (0.4444444477558136, [0.018912984058260918, 0.0, 0.0, 1.0]),
+        (0.5, [0.0, 0.0, 0.0, 1.0]),
+        (0.5555555820465088, [0.000493000028654933, 0.025371000170707703, 0.14799800515174866, 1.0]),
+        (0.6111111640930176, [0.000493000028654933, 0.07173699885606766, 0.31137698888778687, 1.0]),
+        (0.6666667461395264, [0.007108999881893396, 0.14263400435447693, 0.436381995677948, 1.0]),
+        (0.7222223281860352, [0.03423000127077103, 0.2468000054359436, 0.5376899838447571, 1.0]),
+        (0.777777910232544, [0.09710799902677536, 0.3649109899997711, 0.6301739811897278, 1.0]),
+        (0.8333334922790527, [0.2279060035943985, 0.5038710236549377, 0.7154939770698547, 1.0]),
+        (0.8888890743255615, [0.41693100333213806, 0.6365299820899963, 0.7943779826164246, 1.0]),
+        (0.9444446563720703, [0.6109790205955505, 0.74372398853302, 0.8827369809150696, 1.0]),
+        (1.0, [0.9322770237922668, 0.965815007686615, 1.0, 1.0])
+    ],
+    
+    "temp_dif": [
+        (0.0, [0.9322770237922668, 0.965815007686615, 1.0, 1.0]),
+        (0.05555534362792969, [0.6109790205955505, 0.74372398853302, 0.8827369809150696, 1.0]),
+        (0.11111092567443848, [0.41693100333213806, 0.6365299820899963, 0.7943779826164246, 1.0]),
+        (0.16666650772094727, [0.2279060035943985, 0.5038710236549377, 0.7154939770698547, 1.0]),
+        (0.22222208976745605, [0.09710799902677536, 0.3649109899997711, 0.6301739811897278, 1.0]),
+        (0.27777767181396484, [0.03423000127077103, 0.2468000054359436, 0.5376899838447571, 1.0]),
+        (0.33333325386047363, [0.007108999881893396, 0.14263400435447693, 0.436381995677948, 1.0]),
+        (0.3888888359069824, [0.000493000028654933, 0.07173699885606766, 0.31137698888778687, 1.0]),
+        (0.4444444179534912, [0.000493000028654933, 0.025371000170707703, 0.14799800515174866, 1.0]),
+        (0.5, [0.0, 0.0, 0.0, 1.0]),
+        (0.5555555820465088, [0.018912984058260918, 0.0, 0.0, 1.0]),
+        (0.6111111044883728, [0.08690125495195389, 0.0, 0.0, 1.0]),
+        (0.6666666269302368, [0.21763764321804047, 0.0, 0.0, 1.0]),
+        (0.7222222089767456, [0.4071786105632782, 0.0, 0.0, 1.0]),
+        (0.7777777910232544, [0.6730490922927856, 0.008373118005692959, 0.0, 1.0]),
+        (0.8333333730697632, [1.0, 0.08919350802898407, 0.0, 1.0]),
+        (0.8888888955116272, [1.0, 0.28012436628341675, 0.00969632901251316, 1.0]),
+        (0.944444477558136, [1.0, 0.5795466303825378, 0.28012436628341675, 1.0]),
+        (1.0, [1.0, 1.0, 1.0, 1.0])
+    ],
+
+    # ==============================================================================
+    # CUSTOM USER COLOR SCHEMES
+    # ==============================================================================
+    
+    # Example custom precipitation scheme
+    "jw_precip": [
+        (0.0, [0.05, 0.05, 0.2, 1.0]),      # Dark blue (dry)
+        (0.25, [0.2, 0.4, 0.8, 1.0]),       # Medium blue
+        (0.5, [0.4, 0.8, 0.4, 1.0]),        # Green (moderate)
+        (0.75, [0.9, 0.9, 0.2, 1.0]),       # Yellow (wet)
+        (1.0, [0.9, 0.2, 0.1, 1.0])         # Red (very wet)
+    ],
+    
+    # Example custom temperature scheme  
+    "jw_temp": [
+        (0.0, [0.1, 0.1, 0.5, 1.0]),        # Deep blue (cold)
+        (0.2, [0.3, 0.3, 0.9, 1.0]),        # Light blue
+        (0.4, [0.9, 0.9, 0.9, 1.0]),        # White (neutral)
+        (0.6, [0.9, 0.7, 0.3, 1.0]),        # Orange
+        (0.8, [0.9, 0.3, 0.1, 1.0]),        # Red
+        (1.0, [0.6, 0.1, 0.1, 1.0])         # Dark red (hot)
+    ],
+    
+    # Ocean depth inspired scheme
+    "ocean_depth": [
+        (0.0, [0.0, 0.1, 0.2, 1.0]),        # Deep ocean
+        (0.3, [0.0, 0.3, 0.5, 1.0]),        # Mid ocean
+        (0.6, [0.2, 0.6, 0.8, 1.0]),        # Shallow water
+        (0.8, [0.6, 0.9, 0.9, 1.0]),        # Very shallow
+        (1.0, [0.9, 0.95, 1.0, 1.0])        # Surface
+    ],
+    
+    # Earth tones scheme
+    "earth_tones": [
+        (0.0, [0.2, 0.1, 0.0, 1.0]),        # Dark brown
+        (0.25, [0.5, 0.3, 0.1, 1.0]),       # Brown
+        (0.5, [0.7, 0.6, 0.3, 1.0]),        # Tan
+        (0.75, [0.4, 0.6, 0.2, 1.0]),       # Olive green
+        (1.0, [0.2, 0.4, 0.1, 1.0])         # Forest green
+    ],
+    
+    # Fire scheme
+    "fire": [
+        (0.0, [0.0, 0.0, 0.0, 1.0]),        # Black
+        (0.25, [0.3, 0.0, 0.1, 1.0]),       # Dark red
+        (0.5, [0.8, 0.2, 0.0, 1.0]),        # Red
+        (0.75, [1.0, 0.6, 0.1, 1.0]),       # Orange
+        (1.0, [1.0, 1.0, 0.8, 1.0])         # White-yellow
+    ]
+}
+
 # ==============================================================================
-# CONFIGURATION SECTION - MODIFY THESE VALUES
+# POPULAR MATPLOTLIB COLORMAPS
 # ==============================================================================
 
-# A) GeoTIFF Map Selection
-GEOTIFF_PATH = None  # Set to None to auto-find in Input folder, or specify full path
+# List of popular matplotlib colormaps that work well for scientific data
+# These will be dynamically loaded from matplotlib when requested
+
+MATPLOTLIB_COLORMAPS = [
+    # Sequential (single hue)
+    'viridis', 'plasma', 'inferno', 'magma', 'cividis',
+    
+    # Sequential (multi-hue)
+    'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'Oranges', 
+    'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu', 'Reds', 
+    'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
+    
+    # Diverging (good for difference data)
+    'coolwarm', 'bwr', 'seismic', 'RdBu', 'RdGy', 'RdYlBu', 
+    'RdYlGn', 'Spectral', 'BrBG', 'PiYG', 'PRGn', 'PuOr',
+    
+    # Cyclic
+    'twilight', 'twilight_shifted', 'hsv',
+    
+    # Miscellaneous
+    'flag', 'prism', 'ocean', 'gist_earth', 'terrain', 'gist_stern',
+    'gnuplot', 'gnuplot2', 'CMRmap', 'cubehelix', 'brg', 'gist_rainbow',
+    'rainbow', 'jet', 'nipy_spectral', 'gist_ncar'
+]
+
+# ==============================================================================
+# UTILITY FUNCTIONS
+# ==============================================================================
+
+def is_matplotlib_colormap(colormap_name):
+    """Check if colormap name is a matplotlib colormap"""
+    return colormap_name in MATPLOTLIB_COLORMAPS
+
+def is_custom_colormap(colormap_name):
+    """Check if colormap name is a custom colormap"""
+    return colormap_name in CUSTOM_COLOR_RAMPS
+
+def get_custom_colormap(colormap_name):
+    """Get custom colormap data"""
+    if colormap_name in CUSTOM_COLOR_RAMPS:
+        return CUSTOM_COLOR_RAMPS[colormap_name]
+    else:
+        raise ValueError(f"Custom colormap '{colormap_name}' not found")
+
+        
+parser = argparse.ArgumentParser()
+parser.add_argument("input_tiff")
+parser.add_argument("output_dir")
+parser.add_argument("--resource")
+parser.add_argument("--locations", default="Europe", help="comma separated list of locations to plot")
+
+parser.add_argument("--variable", default="temperature", choices=['2t', 'precipitation'])
+parser.add_argument("--vmin", default=0, type=float)
+parser.add_argument("--vmax", default=10, type=float)
+
+parser.add_argument("--do-overlay", action="store_true")
+parser.add_argument("--overlay-color", default="black")
+parser.add_argument("--overlay-opacity", default=0)
+
+
+parser.add_argument("--zoomlevel", default=0)
+parser.add_argument("--dof", action="store_true")
+
+parser.add_argument("--effects", action="store_true", help="add some special effect, like glow")
+parser.add_argument("--lowres", action="store_true")
+
+if "--" in sys.argv:
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+else:
+    args = parser.parse_args()
+
+# parse location string into list
+args.locations = [s.strip() for s in args.locations.split(",")]
 
 # B) Color Selection - Choose from individual or common libraries
-DISPLAY_COLOR = "temperature"     # SCIENTIFIC BEST PRACTICES:
+DISPLAY_COLOR = args.variable # SCIENTIFIC BEST PRACTICES:
                               # For most data: "viridis", "plasma", "cividis" (perceptually uniform)
                               # For temperature anomalies: "coolwarm", "RdBu_r" (diverging)  
                               # For precipitation: "Blues", "BuGn", "jw_precip"
@@ -22,26 +241,26 @@ DISPLAY_COLOR = "temperature"     # SCIENTIFIC BEST PRACTICES:
 
 # C) Map Range Settings
 MAP_RANGE = {
-    "from_min": 0,      # Minimum value in your data
-    "from_max": 2,   # Maximum value in your data
+    "from_min": args.vmin,      # Minimum value in your data
+    "from_max": args.vmax,      # Maximum value in your data
     "to_min": 0.0,      # Maps to color ramp start
     "to_max": 1.0       # Maps to color ramp end
 }
 
 # D) Overlay
-COLORBAR_OVERLAY = True  # Create composite images with colorbars
+COLORBAR_OVERLAY = args.do_overlay  # Create composite images with colorbars
 OVERLAY_SETTINGS = {
     "position": "top_right",        # Colorbar position
-    "colorbar_text": "black",       # Text color
+    "colorbar_text": args.overlay_color,       # Text color
     "colorbar_scale": 0.4,          # Scale relative to image height
     "colorbar_steps": 6,            # Number of tick marks
     "padding": 50,                  # Padding from edges
-    "background_opacity": 0.0       # Background transparency
+    "background_opacity": args.overlay_opacity       # Background transparency
 }
 
 # E) Plot Type and Styling
-WOW_MODE = True  # Glossy surface, emission glow, displacement, adds "_wow" to filenames
-RENDER_OBJECT = "robinson"  # Options: "sphere" or "robinson"
+WOW_MODE = args.effects  # Glossy surface, emission glow, displacement, adds "_wow" to filenames
+RENDER_OBJECT = "sphere"  # Options: "sphere" or "robinson"
 
 # F) SPHERE OPTIONS
 TESTING_MODE = True
@@ -56,9 +275,9 @@ ROTATION_OFFSET = {
 # Camera Settings
 CAMERA_SETTINGS = {
     "focal_length": 50,           # mm - base focal length
-    "zoom_level": 0.5,            # 0 = full sphere visible, 0.5 = close zoom
+    "zoom_level": args.zoomlevel, # 0 = full sphere visible, 0.5 = close zoom
     "distance": 6,                # Distance from sphere center
-    "depth_of_field": False,       # Enable/disable depth of field effect
+    "depth_of_field": args.dof,       # Enable/disable depth of field effect
     "aperture_fstop": 0.7         # F-stop value (lower = more blur)
 }
 
@@ -92,39 +311,6 @@ ROBINSON_SETTINGS = {
 # COLORMAP LOADING SYSTEM
 # ==============================================================================
 
-def load_colormap_library():
-    """Load the external colormap library"""
-    try:
-        # Get the directory where the main script is located
-        script_dir = os.path.dirname(bpy.data.filepath)
-        if not script_dir:
-            # If running in Blender without saved file, try current directory
-            script_dir = os.getcwd()
-        
-        # Look for colormap_library.py in the same directory
-        colormap_file = os.path.join(script_dir, "colormap_library.py")
-        
-        if not os.path.exists(colormap_file):
-            print(f"Warning: colormap_library.py not found at {colormap_file}")
-            print("Using fallback colormaps only.")
-            return None
-        
-        # Add script directory to Python path if not already there
-        if script_dir not in sys.path:
-            sys.path.insert(0, script_dir)
-        
-        # Import the colormap library
-        import colormap_library
-        print(f"✓ Colormap library loaded from: {colormap_file}")
-        
-        return colormap_library
-        
-    except ImportError as e:
-        print(f"Error importing colormap library: {e}")
-        return None
-    except Exception as e:
-        print(f"Error loading colormap library: {e}")
-        return None
 
 def srgb_to_linear(srgb_value):
     """Convert sRGB color value to linear RGB"""
@@ -135,118 +321,37 @@ def srgb_to_linear(srgb_value):
 
 def matplotlib_to_blender_colormap(colormap_name, num_samples=20):
     """Convert a matplotlib colormap to Blender color ramp format with proper color space conversion"""
-    try:
-        import matplotlib.pyplot as plt
-        import numpy as np
+    
+    cmap = plt.get_cmap(colormap_name)
+    positions = np.linspace(0, 1, num_samples)
+    colors = []
+    
+    for pos in positions:
+        rgba_srgb = cmap(pos)
+        r_linear = srgb_to_linear(rgba_srgb[0])
+        g_linear = srgb_to_linear(rgba_srgb[1])
+        b_linear = srgb_to_linear(rgba_srgb[2])
+        a_linear = rgba_srgb[3]
+        colors.append((pos, [r_linear, g_linear, b_linear, a_linear]))
+    
+    print(f"✓ Converted matplotlib colormap '{colormap_name}' from sRGB to linear RGB")
+    return colors
         
-        cmap = plt.get_cmap(colormap_name)
-        positions = np.linspace(0, 1, num_samples)
-        colors = []
-        
-        for pos in positions:
-            rgba_srgb = cmap(pos)
-            r_linear = srgb_to_linear(rgba_srgb[0])
-            g_linear = srgb_to_linear(rgba_srgb[1])
-            b_linear = srgb_to_linear(rgba_srgb[2])
-            a_linear = rgba_srgb[3]
-            colors.append((pos, [r_linear, g_linear, b_linear, a_linear]))
-        
-        print(f"✓ Converted matplotlib colormap '{colormap_name}' from sRGB to linear RGB")
-        return colors
-        
-    except ImportError:
-        print(f"Warning: matplotlib not available, cannot load colormap '{colormap_name}'")
-        return [(0.0, [0.0, 0.0, 0.0, 1.0]), (1.0, [1.0, 1.0, 1.0, 1.0])]
-    except Exception as e:
-        print(f"Error loading matplotlib colormap '{colormap_name}': {e}")
-        return [(0.0, [0.0, 0.0, 0.0, 1.0]), (1.0, [1.0, 1.0, 1.0, 1.0])]
 
-def get_colormap_data(colormap_name, colormap_lib=None):
+def get_colormap_data(colormap_name):
     """Get colormap data for the specified colormap name"""
     
-    if colormap_lib is None:
-        # Fallback to basic colormaps if library not available
-        return get_fallback_colormap(colormap_name)
+    # Check if it's a custom colormap
+    if is_custom_colormap(colormap_name):
+        print(f"Using custom colormap: {colormap_name}")
+        return get_custom_colormap(colormap_name)
     
-    try:
-        # Check if it's a custom colormap
-        if colormap_lib.is_custom_colormap(colormap_name):
-            print(f"Using custom colormap: {colormap_name}")
-            return colormap_lib.get_custom_colormap(colormap_name)
-        
-        # Check if it's a matplotlib colormap
-        elif colormap_lib.is_matplotlib_colormap(colormap_name):
-            print(f"Using matplotlib colormap: {colormap_name}")
-            return matplotlib_to_blender_colormap(colormap_name, num_samples=20)
-        
-        else:
-            print(f"Warning: Colormap '{colormap_name}' not found in library")
-            # Use fallback
-            return get_fallback_colormap(colormap_name)
+    # Check if it's a matplotlib colormap
+    elif is_matplotlib_colormap(colormap_name):
+        print(f"Using matplotlib colormap: {colormap_name}")
+        return matplotlib_to_blender_colormap(colormap_name, num_samples=20)
             
-    except Exception as e:
-        print(f"Error loading colormap '{colormap_name}': {e}")
-        return get_fallback_colormap(colormap_name)
 
-def get_fallback_colormap(colormap_name):
-    """Provide basic fallback colormaps if library is not available"""
-    
-    # Helper function to convert sRGB to linear
-    def srgb_to_linear(srgb_value):
-        if srgb_value <= 0.04045:
-            return srgb_value / 12.92
-        else:
-            return pow((srgb_value + 0.055) / 1.055, 2.4)
-    
-    # Convert sRGB colors to linear RGB
-    def convert_color(srgb_color):
-        return [srgb_to_linear(srgb_color[0]), srgb_to_linear(srgb_color[1]), srgb_to_linear(srgb_color[2]), srgb_color[3]]
-    
-    # Define fallback maps in sRGB first, then convert
-    fallback_maps_srgb = {
-        "temperature": [
-            (0.0, [0.0, 0.0, 0.5, 1.0]),    # Blue (cold)
-            (0.5, [0.5, 0.5, 0.5, 1.0]),    # Gray (neutral)
-            (1.0, [0.8, 0.2, 0.2, 1.0])     # Red (hot)
-        ],
-        "precipitation": [
-            (0.0, [0.8, 0.7, 0.5, 1.0]),    # Tan (dry)
-            (0.5, [0.4, 0.7, 0.4, 1.0]),    # Green (moderate)
-            (1.0, [0.2, 0.3, 0.8, 1.0])     # Blue (wet)
-        ],
-        "viridis": [  # Approximate viridis colors in sRGB
-            (0.0, [0.27, 0.00, 0.33, 1.0]),
-            (0.25, [0.23, 0.30, 0.55, 1.0]),
-            (0.5, [0.13, 0.57, 0.55, 1.0]),
-            (0.75, [0.37, 0.80, 0.39, 1.0]),
-            (1.0, [0.99, 0.91, 0.15, 1.0])
-        ],
-        "plasma": [  # Approximate plasma colors in sRGB
-            (0.0, [0.05, 0.03, 0.53, 1.0]),
-            (0.25, [0.5, 0.0, 0.7, 1.0]),
-            (0.5, [0.8, 0.3, 0.4, 1.0]),
-            (0.75, [0.95, 0.7, 0.2, 1.0]),
-            (1.0, [0.95, 0.95, 0.1, 1.0])
-        ]
-    }
-    
-    if colormap_name in fallback_maps_srgb:
-        # Convert sRGB fallback to linear RGB
-        srgb_colors = fallback_maps_srgb[colormap_name]
-        linear_colors = []
-        for pos, color in srgb_colors:
-            linear_color = convert_color(color)
-            linear_colors.append((pos, linear_color))
-        
-        print(f"Using fallback colormap for: {colormap_name} (converted to linear RGB)")
-        return linear_colors
-    else:
-        print(f"Warning: No fallback available for '{colormap_name}', using grayscale")
-        # Grayscale fallback (already in linear RGB)
-        return [
-            (0.0, [0.0, 0.0, 0.0, 1.0]),    # Black
-            (1.0, [1.0, 1.0, 1.0, 1.0])     # White
-        ]
 
 # ==============================================================================
 # MAIN SCRIPT FUNCTIONS
@@ -258,50 +363,6 @@ def clear_scene():
     for material in bpy.data.materials:
         bpy.data.materials.remove(material)
 
-def find_geotiff(projection="EPSG:4326"):
-    """Find GeoTIFF in projection-specific folder"""
-    # If specific path is provided, use it
-    if GEOTIFF_PATH and os.path.exists(GEOTIFF_PATH):
-        filename = os.path.splitext(os.path.basename(GEOTIFF_PATH))[0]
-        return GEOTIFF_PATH, filename
-    
-    script_dir = os.path.dirname(bpy.data.filepath)
-    data_sphere_dir = os.path.dirname(script_dir)
-    
-    # Look in projection-specific folder
-    if projection == "ESRI:54030":
-        input_dir = os.path.join(data_sphere_dir, "Input", "ESRI:54030")
-        print(f"Looking for Robinson GeoTIFF in: Input/ESRI:54030/")
-    else:
-        input_dir = os.path.join(data_sphere_dir, "Input", "EPSG:4326")
-        print(f"Looking for Plate Carrée GeoTIFF in: Input/EPSG:4326/")
-    
-    if not os.path.exists(input_dir):
-        print(f"Creating directory: {input_dir}")
-        os.makedirs(input_dir, exist_ok=True)
-        return None, None
-    
-    tiff_files = []
-    for pattern in ["*.tif", "*.tiff", "*.TIF", "*.TIFF"]:
-        found_files = glob.glob(os.path.join(input_dir, pattern))
-        # For Robinson, exclude mask files
-        if projection == "ESRI:54030":
-            tiff_files.extend([f for f in found_files if 'mask' not in os.path.basename(f).lower()])
-        else:
-            tiff_files.extend(found_files)
-    
-    if tiff_files:
-        print(f"Found {len(tiff_files)} GeoTIFF files:")
-        for i, file in enumerate(tiff_files):
-            print(f"  {i+1}: {os.path.basename(file)}")
-        
-        selected_file = tiff_files[0]
-        filename = os.path.splitext(os.path.basename(selected_file))[0]
-        print(f"Using: {os.path.basename(selected_file)}")
-        return selected_file, filename
-    else:
-        print(f"No GeoTIFF files found in {projection} folder")
-        return None, None
 
 def create_sphere():
     """Create sphere with subdivision"""
@@ -347,16 +408,10 @@ def create_robinson_plane():
     print(f"Robinson plane created with 4x mesh subdivision + simple subsurf (4:2 aspect ratio)")
     return robinson
 
-def setup_color_ramp(color_ramp_node, colormap_name, colormap_lib=None):
-    """Set up color ramp based on colormap name (custom or matplotlib)"""
+def setup_color_ramp(color_ramp_node, colormap_name):
     
     # Get the colormap data
-    colors = get_colormap_data(colormap_name, colormap_lib)
-    
-    if not colors:
-        print(f"Error: Could not load colormap '{colormap_name}'")
-        return
-    
+    colors = get_colormap_data(colormap_name)
     color_ramp = color_ramp_node.color_ramp
     
     # Clear existing elements except first and last
@@ -376,7 +431,7 @@ def setup_color_ramp(color_ramp_node, colormap_name, colormap_lib=None):
     
     print(f"✓ Colormap '{colormap_name}' applied with {len(colors)} color stops")
 
-def create_climate_material(obj, geotiff_path, is_robinson=False, colormap_lib=None):
+def create_climate_material(obj, geotiff_path, is_robinson=False):
     """Create climate material - works for both sphere and Robinson"""
     material_name = "robinson_material" if is_robinson else "climate_material"
     mat = bpy.data.materials.new(name=material_name)
@@ -425,6 +480,7 @@ def create_climate_material(obj, geotiff_path, is_robinson=False, colormap_lib=N
         env_tex.label = "Sphere Data"
     
     # Load main texture
+    geotiff_path = os.path.abspath(geotiff_path)
     if geotiff_path and os.path.exists(geotiff_path):
         try:
             img = bpy.data.images.load(geotiff_path)
@@ -491,7 +547,7 @@ def create_climate_material(obj, geotiff_path, is_robinson=False, colormap_lib=N
     color_ramp.label = DISPLAY_COLOR
     
     # Use the new colormap system instead of hardcoded ramps
-    setup_color_ramp(color_ramp, DISPLAY_COLOR, colormap_lib)
+    setup_color_ramp(color_ramp, DISPLAY_COLOR)
     
     # Surface detail nodes
     bump = nodes.new(type='ShaderNodeBump')
@@ -572,14 +628,15 @@ def create_continent_cameras():
     
     # Combine continent and interest positions
     all_positions = {**CONTINENT_POSITIONS, **INTEREST_POSITIONS}
-    
+    selected_positions = {key: all_positions[key] for key in args.locations}
+
     print(f"Creating {len(all_positions)} sphere cameras (focal length: {adjusted_focal}mm)")
     if use_dof or WOW_MODE:
         sphere_radius = 2.0
         focus_dist = distance - sphere_radius
         print(f"  DOF enabled (f/{aperture_fstop}, focus at sphere surface: {focus_dist} units)")
     
-    for location_name, (lat, lon) in all_positions.items():
+    for location_name, (lat, lon) in selected_positions.items():
         lat_rad = math.radians(lat)
         lon_rad = math.radians(lon)
         
@@ -629,7 +686,7 @@ def create_robinson_camera():
     
     return {"TopView": camera}
 
-def setup_render_settings(obj_type="sphere"):
+def setup_render_settings(obj_type="sphere", lowres=False):
     """Configure render settings for sphere or Robinson"""
     scene = bpy.context.scene
     
@@ -640,8 +697,12 @@ def setup_render_settings(obj_type="sphere"):
         print(f"Robinson render settings: {scene.render.resolution_x} x {scene.render.resolution_y}")
     else:
         # Square for sphere
-        scene.render.resolution_x = 2000
-        scene.render.resolution_y = 2000
+        if lowres:
+            scene.render.resolution_x = 200
+            scene.render.resolution_y = 200
+        else:
+            scene.render.resolution_x = 2000
+            scene.render.resolution_y = 2000
         print(f"Sphere render settings: {scene.render.resolution_x} x {scene.render.resolution_y}")
     
     scene.render.resolution_percentage = 100
@@ -656,6 +717,8 @@ def setup_render_settings(obj_type="sphere"):
     else:
         scene.cycles.samples = 128
         print("  Standard samples (128)")
+    if lowres:
+        scene.cycles.samples = 32
     
     try:
         cycles_prefs = bpy.context.preferences.addons['cycles'].preferences
@@ -890,7 +953,7 @@ def create_colorbar_overlay(sphere_image_path, colorbar_image_path, output_path,
     except Exception:
         return False
 
-def generate_scientific_colorbars(output_dir, variable_type, from_min, from_max, suffix="", colormap_lib=None):
+def generate_scientific_colorbars(output_dir, variable_type, from_min, from_max, suffix="" ):
     """Generate colorbars using the new colormap system"""
     if not ensure_matplotlib():
         return
@@ -922,21 +985,13 @@ def generate_scientific_colorbars(output_dir, variable_type, from_min, from_max,
             output_dir = tempfile.gettempdir()
         
         # Create colormap for matplotlib
-        if colormap_lib and hasattr(colormap_lib, 'is_matplotlib_colormap') and colormap_lib.is_matplotlib_colormap(variable_type):
+        if is_matplotlib_colormap(variable_type):
             # Use matplotlib colormap directly
-            try:
-                cmap = plt.get_cmap(variable_type)
-                print(f"Using matplotlib colormap directly: {variable_type}")
-            except:
-                # Fallback to manual creation
-                colors_data = get_colormap_data(variable_type, colormap_lib)
-                positions = [item[0] for item in colors_data]
-                colors = [item[1][:3] for item in colors_data]  # RGB only
-                cmap = mcolors.LinearSegmentedColormap.from_list(variable_type, list(zip(positions, colors)))
-                print(f"Created matplotlib colormap from library data: {variable_type}")
+            cmap = plt.get_cmap(variable_type)
+            print(f"Using matplotlib colormap directly: {variable_type}")
         else:
             # Create from custom colormap data
-            colors_data = get_colormap_data(variable_type, colormap_lib)
+            colors_data = get_colormap_data(variable_type)
             if colors_data:
                 positions = [item[0] for item in colors_data]
                 colors = [item[1][:3] for item in colors_data]  # RGB only
@@ -1055,54 +1110,31 @@ def create_overlays_for_renders(output_dir, input_filename, suffix, obj_type):
     # Find rendered files to overlay
     rendered_files = []
     
-    if TESTING_MODE:
-        if obj_type == "robinson":
-            # Robinson testing mode
+    if obj_type == "sphere":
+        # All continent and interest positions
+        all_positions = {**CONTINENT_POSITIONS, **INTEREST_POSITIONS}
+        for location_name in all_positions.keys():
             if input_filename:
-                test_filename = f"{input_filename}_TopView{suffix}.png"
+                filename = f"{input_filename}_{location_name}{suffix}.png"
             else:
-                test_filename = f"test_TopView{suffix}.png"
-        else:
-            # Sphere testing mode  
-            if input_filename:
-                test_filename = f"{input_filename}_{TEST_CAMERA}{suffix}.png"
-            else:
-                test_filename = f"test_{TEST_CAMERA}{suffix}.png"
-        
-        test_path = os.path.join(output_dir, test_filename)
-        if os.path.exists(test_path):
-            rendered_files.append(test_filename)
-            print(f"Found test file for overlay: {test_filename}")
-        else:
-            print(f"Test file not found for overlay: {test_filename}")
-    
-    else:
-        # Normal mode - find all rendered files
-        if obj_type == "sphere":
-            # All continent and interest positions
-            all_positions = {**CONTINENT_POSITIONS, **INTEREST_POSITIONS}
-            for location_name in all_positions.keys():
-                if input_filename:
-                    filename = f"{input_filename}_{location_name}{suffix}.png"
-                else:
-                    filename = f"sphere_{location_name}{suffix}.png"
-                
-                if os.path.exists(os.path.join(output_dir, filename)):
-                    rendered_files.append(filename)
-        
-        else:  # robinson
-            # Robinson has only TopView camera
-            if input_filename:
-                filename = f"{input_filename}_TopView{suffix}.png"
-            else:
-                filename = f"robinson_TopView{suffix}.png"
+                filename = f"sphere_{location_name}{suffix}.png"
             
-            filepath = os.path.join(output_dir, filename)
-            if os.path.exists(filepath):
+            if os.path.exists(os.path.join(output_dir, filename)):
                 rendered_files.append(filename)
-                print(f"Found Robinson file for overlay: {filename}")
-            else:
-                print(f"Robinson file not found for overlay: {filename}")
+    
+    else:  # robinson
+        # Robinson has only TopView camera
+        if input_filename:
+            filename = f"{input_filename}_TopView{suffix}.png"
+        else:
+            filename = f"robinson_TopView{suffix}.png"
+        
+        filepath = os.path.join(output_dir, filename)
+        if os.path.exists(filepath):
+            rendered_files.append(filename)
+            print(f"Found Robinson file for overlay: {filename}")
+        else:
+            print(f"Robinson file not found for overlay: {filename}")
     
     if not rendered_files:
         print(f"No rendered files found for {obj_type} overlay")
@@ -1125,16 +1157,9 @@ def create_overlays_for_renders(output_dir, input_filename, suffix, obj_type):
     
     print(f"Created {success_count}/{len(rendered_files)} overlay composites for {obj_type}")
 
-def render_object_cameras(cameras, input_filename, obj_type="sphere", colormap_lib=None):
+def render_object_cameras(cameras, input_filename, output_dir, obj_type="sphere"):
     """Render views from cameras"""
-    script_dir = os.path.dirname(bpy.data.filepath)
-    data_sphere_dir = os.path.dirname(script_dir)
-    
-    # Create proper output directory based on object type
-    if obj_type == "robinson":
-        output_dir = os.path.join(data_sphere_dir, "Output", "Robinson")
-    else:
-        output_dir = os.path.join(data_sphere_dir, "Output", "Sphere")
+    data_sphere_dir = os.path.dirname(output_dir)
     
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -1166,82 +1191,26 @@ def render_object_cameras(cameras, input_filename, obj_type="sphere", colormap_l
     
     print(f"  Filename suffix: {suffix}")
     
-    if TESTING_MODE:
-        # In testing mode, only render one camera
-        if obj_type == "robinson":
-            # Robinson only has TopView camera
-            if "TopView" in cameras:
-                camera = cameras["TopView"]
-                bpy.context.scene.camera = camera
-                
-                if input_filename:
-                    output_name = f"{input_filename}_TopView{suffix}.png"
-                else:
-                    output_name = f"test_TopView{suffix}.png"
-                
-                output_path = os.path.join(output_dir, output_name)
-                bpy.context.scene.render.filepath = output_path
-                
-                print(f"TESTING MODE: Rendering {obj_type} TopView...")
-                print(f"  Output: {output_name}")
-                
-                try:
-                    bpy.ops.render.render(write_still=True)
-                    print(f"  Rendered: {output_path}")
-                except Exception as e:
-                    print(f"  Render failed: {e}")
-            else:
-                print(f"TopView camera not found!")
+    for location_name, camera in cameras.items():
+        bpy.context.scene.camera = camera
+        
+        if input_filename:
+            output_name = f"{input_filename}_{location_name}{suffix}.png"
         else:
-            # Sphere mode - render test camera
-            if TEST_CAMERA in cameras:
-                camera = cameras[TEST_CAMERA]
-                bpy.context.scene.camera = camera
-                
-                if input_filename:
-                    output_name = f"{input_filename}_{TEST_CAMERA}{suffix}.png"
-                else:
-                    output_name = f"test_{TEST_CAMERA}{suffix}.png"
-                
-                output_path = os.path.join(output_dir, output_name)
-                bpy.context.scene.render.filepath = output_path
-                
-                print(f"TESTING MODE: Rendering {obj_type} {TEST_CAMERA} view only...")
-                print(f"  Output: {output_name}")
-                
-                try:
-                    bpy.ops.render.render(write_still=True)
-                    print(f"  Rendered: {output_path}")
-                except Exception as e:
-                    print(f"  Render failed: {e}")
-            else:
-                print(f"Test camera '{TEST_CAMERA}' not found!")
-    else:
-        # Normal mode: render all cameras
-        print(f"Rendering all {obj_type} views...")
-        if WOW_MODE:
-            print("  WOW MODE active - renders will take longer due to enhanced effects")
+            output_name = f"{obj_type}_{location_name}{suffix}.png"
         
-        for location_name, camera in cameras.items():
-            bpy.context.scene.camera = camera
-            
-            if input_filename:
-                output_name = f"{input_filename}_{location_name}{suffix}.png"
-            else:
-                output_name = f"{obj_type}_{location_name}{suffix}.png"
-            
-            output_path = os.path.join(output_dir, output_name)
-            bpy.context.scene.render.filepath = output_path
-            
-            print(f"  Rendering {location_name}...")
-            
-            try:
-                bpy.ops.render.render(write_still=True)
-                print(f"  Saved: {output_name}")
-            except Exception as e:
-                print(f"  Failed: {e}")
+        output_path = os.path.join(output_dir, output_name)
+        bpy.context.scene.render.filepath = output_path
         
-        print(f"All {obj_type} renders complete! Check: {output_dir}")
+        print(f"  Rendering {location_name}...")
+        
+        try:
+            bpy.ops.render.render(write_still=True)
+            print(f"  Saved: {output_name}")
+        except Exception as e:
+            print(f"  Failed: {e}")
+    
+    print(f"All {obj_type} renders complete! Check: {output_dir}")
     
     # Generate colorbars and overlays
     if COLORBAR_OVERLAY:
@@ -1252,53 +1221,11 @@ def render_object_cameras(cameras, input_filename, obj_type="sphere", colormap_l
             MAP_RANGE['from_min'], 
             MAP_RANGE['from_max'], 
             suffix,
-            colormap_lib    # Pass the colormap library
         )
         create_overlays_for_renders(output_dir, input_filename, suffix, obj_type)
 
-def print_configuration():
-    """Print current configuration with colormap info"""
-    print("\n" + "="*70)
-    print("CLIMATE GLOBE GENERATOR - ENHANCED CONFIGURATION")
-    print("="*70)
-    print(f"Colormap: {DISPLAY_COLOR}")  # Changed from Variable Type
-    print(f"WOW MODE: {'ENABLED' if WOW_MODE else 'Disabled'}")
-    if WOW_MODE:
-        print("  - Enhanced visuals: DOF, glossy surface, emission glow, displacement light")
-    print(f"COLORBAR OVERLAY: {'ENABLED' if COLORBAR_OVERLAY else 'Disabled'}")
-    print(f"Map Range: [{MAP_RANGE['from_min']:.2f}, {MAP_RANGE['from_max']:.2f}] -> [{MAP_RANGE['to_min']:.2f}, {MAP_RANGE['to_max']:.2f}]")
-    print(f"Camera DOF: {'ENABLED' if CAMERA_SETTINGS['depth_of_field'] else 'Disabled'}")
-    if CAMERA_SETTINGS['depth_of_field']:
-        print(f"  - Aperture: f/{CAMERA_SETTINGS['aperture_fstop']}")
-    
-    print(f"\nOBJECT SELECTION:")
-    print(f"  - Render Mode: {RENDER_OBJECT.upper()}")
-    
-    if RENDER_OBJECT == "sphere":
-        total_sphere_cameras = len(CONTINENT_POSITIONS) + len(INTEREST_POSITIONS)
-        print(f"  - Sphere Cameras: {total_sphere_cameras} ({len(CONTINENT_POSITIONS)} continents + {len(INTEREST_POSITIONS)} interest points)")
-    elif RENDER_OBJECT == "robinson":
-        print(f"  - Robinson Camera: 1 (orthographic top-view, perfect fit)")
-        print(f"  - Robinson Resolution: {ROBINSON_SETTINGS['resolution_width']} x {ROBINSON_SETTINGS['resolution_width']//2}")
-        print(f"  - Robinson Mesh: 4x subdivision + simple subsurf (viewport: 3, render: 3)")
-    
-    if RENDER_OBJECT == "robinson":
-        test_camera_display = "TopView" if TESTING_MODE else "N/A"
-    else:
-        test_camera_display = TEST_CAMERA
-    
-    print(f"Testing Mode: {TESTING_MODE} ({test_camera_display})")
-    print("="*70 + "\n")
-
 def main():
-    """Enhanced main function with flexible colormap system"""
-    print("CLIMATE GLOBE GENERATOR - ENHANCED WITH FLEXIBLE COLORMAPS")
-    
-    # Load colormap library first
-    print("Loading colormap library...")
-    colormap_lib = load_colormap_library()
-    
-    print_configuration()
+    print("CLIMATE GLOBE GENERATOR")
     
     # 1. Clear scene
     print("1. Clearing scene...")
@@ -1312,30 +1239,31 @@ def main():
     if RENDER_OBJECT == "sphere":
         print("3. Creating SPHERE...")
         
-        geotiff_path, input_filename = find_geotiff("EPSG:4326")
-        if not geotiff_path:
-            print("Warning: No sphere GeoTIFF found, continuing with procedural colors only")
+        geotiff_path = args.input_tiff
+        input_filename = filename = os.path.splitext(os.path.basename(geotiff_path))[0]
         
         sphere = create_sphere()
-        sphere_material = create_climate_material(sphere, geotiff_path, is_robinson=False, colormap_lib=colormap_lib)
+        sphere_material = create_climate_material(sphere, geotiff_path, is_robinson=False)
         cameras = create_continent_cameras()
         
         print(f"Sphere setup complete ({len(cameras)} cameras)")
         
         # 4. Setup render settings and render
         print("4. Rendering SPHERE...")
-        setup_render_settings("sphere")
-        render_object_cameras(cameras, input_filename, "sphere", colormap_lib)
+        setup_render_settings("sphere", args.lowres)
+        render_object_cameras(cameras, input_filename, args.output_dir, "sphere")
+        bpy.ops.wm.save_as_mainfile(filepath="./blendertest.blend")
         
     elif RENDER_OBJECT == "robinson":
         print("3. Creating ROBINSON...")
         
-        robinson_geotiff_path, robinson_filename = find_geotiff("ESRI:54030")
+        robinson_geotiff_path = args.input_tiff
+        robinson_filename = os.path.splitext(os.path.basename(geotiff_path))[0]
         if not robinson_geotiff_path:
             print("Warning: No Robinson GeoTIFF found, continuing with procedural colors only")
         
         robinson = create_robinson_plane()
-        robinson_material = create_climate_material(robinson, robinson_geotiff_path, is_robinson=True, colormap_lib=colormap_lib)
+        robinson_material = create_climate_material(robinson, robinson_geotiff_path, is_robinson=True)
         cameras = create_robinson_camera()
         
         print(f"Robinson setup complete (1 camera)")
@@ -1343,60 +1271,12 @@ def main():
         # 4. Setup render settings and render
         print("4. Rendering ROBINSON...")
         setup_render_settings("robinson")
-        render_object_cameras(cameras, robinson_filename, "robinson", colormap_lib)
+        render_object_cameras(cameras, robinson_filename, args.output_dir, "robinson")
     
     else:
         print(f"ERROR: Invalid RENDER_OBJECT '{RENDER_OBJECT}'. Use 'sphere' or 'robinson'")
         return
     
-    # 5. Final summary
-    print("\n" + "="*70)
-    print("CLIMATE GLOBE GENERATION COMPLETE!")
-    print("="*70)
-    print(f"✓ Colormap used: {DISPLAY_COLOR}")
-    
-    if colormap_lib:
-        if hasattr(colormap_lib, 'is_custom_colormap') and colormap_lib.is_custom_colormap(DISPLAY_COLOR):
-            print("  - Type: Custom colormap")
-        elif hasattr(colormap_lib, 'is_matplotlib_colormap') and colormap_lib.is_matplotlib_colormap(DISPLAY_COLOR):
-            print("  - Type: Matplotlib colormap") 
-        else:
-            print("  - Type: Fallback colormap")
-    else:
-        print("  - Type: Fallback colormap (library not loaded)")
-    
-    if RENDER_OBJECT == "sphere":
-        if 'input_filename' in locals() and input_filename:
-            print(f"SPHERE: {os.path.basename(input_filename)}")
-        print(f"  - Variable: {DISPLAY_COLOR}")
-        if TESTING_MODE:
-            print(f"  - Testing Mode: Rendered {TEST_CAMERA} view only")
-        else:
-            print(f"  - Rendered all sphere views")
-    
-    elif RENDER_OBJECT == "robinson":
-        if 'robinson_filename' in locals() and robinson_filename:
-            print(f"ROBINSON: {os.path.basename(robinson_filename)}")
-        print(f"  - Variable: {DISPLAY_COLOR}")
-        print(f"  - Camera: Top-view orthographic (perfect fit)")
-        print(f"  - Resolution: {ROBINSON_SETTINGS['resolution_width']} x {ROBINSON_SETTINGS['resolution_width']//2}")
-        print(f"  - Mesh: 4x subdivisions + simple subsurf")
-    
-    if WOW_MODE:
-        print(f"WOW MODE: Enhanced visual effects active")
-    
-    if COLORBAR_OVERLAY:
-        print(f"COLORBAR OVERLAY: Generated with overlays")
-    
-    print(f"\nOutput Location:")
-    script_dir = os.path.dirname(bpy.data.filepath)
-    data_sphere_dir = os.path.dirname(script_dir)
-    if RENDER_OBJECT == "sphere":
-        print(f"   {os.path.join(data_sphere_dir, 'Output', 'Sphere')}")
-    elif RENDER_OBJECT == "robinson":
-        print(f"   {os.path.join(data_sphere_dir, 'Output', 'Robinson')}")
-    
-    print("="*70)
 
 # Run the script
 if __name__ == "__main__":
