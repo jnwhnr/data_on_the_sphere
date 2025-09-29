@@ -207,13 +207,13 @@ parser.add_argument("output_dir")
 parser.add_argument("--resource")
 parser.add_argument("--locations", default="Europe", help="comma separated list of locations to plot")
 
-parser.add_argument("--variable", default="temperature", choices=['2t', 'precipitation'])
+parser.add_argument("--variable", default="temperature", choices=['2t', 'precipitation', 'precip_dif', 'temp_dif'])
 parser.add_argument("--vmin", default=0, type=float)
 parser.add_argument("--vmax", default=10, type=float)
 
 parser.add_argument("--do-overlay", action="store_true")
 parser.add_argument("--overlay-color", default="black")
-parser.add_argument("--overlay-opacity", default=0)
+parser.add_argument("--overlay-opacity", default=0, type=float)
 
 
 parser.add_argument("--zoomlevel", default=0)
@@ -1108,7 +1108,8 @@ def create_overlays_for_renders(output_dir, input_filename, suffix, obj_type):
     if obj_type == "sphere":
         # All continent and interest positions
         all_positions = {**CONTINENT_POSITIONS, **INTEREST_POSITIONS}
-        for location_name in all_positions.keys():
+        selected_positions = {key: all_positions[key] for key in args.locations if key in all_positions}
+        for location_name in selected_positions.keys():
             if input_filename:
                 filename = f"{input_filename}_{location_name}{suffix}.png"
             else:
