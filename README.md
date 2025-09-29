@@ -1,4 +1,4 @@
-# render geotif
+# data on the sphere
 
 
 ## install requirements
