@@ -11,7 +11,7 @@ import argparse
 
 CUSTOM_COLOR_RAMPS = {
     # Original climate data color schemes
-    "precipitation": [
+    "tp": [
         (0.0, [0.0, 0.0, 0.0, 1.0]),
         (0.05263155698776245, [0.061205919831991196, 0.0037467454094439745, 0.13492080569267273, 1.0]),
         (0.10526317358016968, [0.06187712028622627, 0.01448772568255663, 0.18247292935848236, 1.0]),
@@ -34,7 +34,7 @@ CUSTOM_COLOR_RAMPS = {
         (1.0, [0.9852057695388794, 0.8050958514213562, 0.014059592969715595, 1.0])
     ],
     
-    "temperature": [
+    "t2m": [
         (0.0, [0.0, 0.0, 0.0, 1.0]),
         (0.05263155698776245, [0.003496936522424221, 0.0, 0.0, 1.0]),
         (0.10526317358016968, [0.01606770046055317, 0.0, 0.0, 1.0]),
@@ -57,7 +57,7 @@ CUSTOM_COLOR_RAMPS = {
         (1.0, [1.0, 1.0, 1.0, 1.0])
     ],
     
-    "precip_dif": [
+    "tp_dif": [
         (0.0, [1.0, 1.0, 1.0, 1.0]),
         (0.055555541068315506, [1.0, 0.5795466303825378, 0.28012436628341675, 1.0]),
         (0.1111111119389534, [1.0, 0.28012436628341675, 0.00969632901251316, 1.0]),
@@ -79,7 +79,7 @@ CUSTOM_COLOR_RAMPS = {
         (1.0, [0.9322770237922668, 0.965815007686615, 1.0, 1.0])
     ],
     
-    "temp_dif": [
+    "t2m_dif": [
         (0.0, [0.9322770237922668, 0.965815007686615, 1.0, 1.0]),
         (0.05555534362792969, [0.6109790205955505, 0.74372398853302, 0.8827369809150696, 1.0]),
         (0.11111092567443848, [0.41693100333213806, 0.6365299820899963, 0.7943779826164246, 1.0]),
@@ -106,24 +106,7 @@ CUSTOM_COLOR_RAMPS = {
     # ==============================================================================
     
     # Example custom precipitation scheme
-    "jw_precip": [
-        (0.0, [0.05, 0.05, 0.2, 1.0]),      # Dark blue (dry)
-        (0.25, [0.2, 0.4, 0.8, 1.0]),       # Medium blue
-        (0.5, [0.4, 0.8, 0.4, 1.0]),        # Green (moderate)
-        (0.75, [0.9, 0.9, 0.2, 1.0]),       # Yellow (wet)
-        (1.0, [0.9, 0.2, 0.1, 1.0])         # Red (very wet)
-    ],
-    
-    # Example custom temperature scheme  
-    "jw_temp": [
-        (0.0, [0.1, 0.1, 0.5, 1.0]),        # Deep blue (cold)
-        (0.2, [0.3, 0.3, 0.9, 1.0]),        # Light blue
-        (0.4, [0.9, 0.9, 0.9, 1.0]),        # White (neutral)
-        (0.6, [0.9, 0.7, 0.3, 1.0]),        # Orange
-        (0.8, [0.9, 0.3, 0.1, 1.0]),        # Red
-        (1.0, [0.6, 0.1, 0.1, 1.0])         # Dark red (hot)
-    ],
-    
+        
     # Ocean depth inspired scheme
     "ocean_depth": [
         (0.0, [0.0, 0.1, 0.2, 1.0]),        # Deep ocean
@@ -207,7 +190,7 @@ parser.add_argument("output_dir")
 parser.add_argument("--resource")
 parser.add_argument("--locations", default="Europe", help="comma separated list of locations to plot")
 
-parser.add_argument("--variable", default="temperature", choices=['2t', 'precipitation', 'precip_dif', 'temp_dif'])
+parser.add_argument("--variable", default="t2m")
 parser.add_argument("--vmin", default=0, type=float)
 parser.add_argument("--vmax", default=10, type=float)
 

@@ -46,7 +46,9 @@ variable.rio.to_raster("your_data.tif", driver="GTiff", compress="LZW")
 **Optional:**
 - `--resource` - Resource parameter
 - `--locations` - Comma separated locations (default: "Europe")
-- `--variable` - Variable type: '2t' or 'precipitation' (default: "temperature")
+  - Available: `Africa`, `Europe`, `Asia`, `North_America`, `South_America`, `Australia`, `Arctic`, `Antarctica`, `Marrakech_Atlas`, `Congo_River`, `Himalayas`, `Bremen`
+- `--variable` - Variable type (default: "temperature")
+  - Available: `t2m`, `tp`, `tp_dif`, `t2m_dif`, `ocean_depth`, `earth_tones`, `fire`, `viridis`, `plasma`, `inferno`, `magma`, `cividis`, `Blues`, `BuGn`, `BuPu`, `GnBu`, `Greens`, `Greys`, `Oranges`, `OrRd`, `PuBu`, `PuBuGn`, `PuRd`, `Purples`, `RdPu`, `Reds`, `YlGn`, `YlGnBu`, `YlOrBr`, `YlOrRd`, `coolwarm`, `bwr`, `seismic`, `RdBu`, `RdGy`, `RdYlBu`, `RdYlGn`, `Spectral`, `BrBG`, `PiYG`, `PRGn`, `PuOr`, `twilight`, `twilight_shifted`, `hsv`, `flag`, `prism`, `ocean`, `gist_earth`, `terrain`, `gist_stern`, `gnuplot`, `gnuplot2`, `CMRmap`, `cubehelix`, `brg`, `gist_rainbow`, `rainbow`, `jet`, `nipy_spectral`, `gist_ncar`
 - `--vmin` - Minimum value (default: 0)
 - `--vmax` - Maximum value (default: 10)
 - `--do-overlay` - Enable overlay
