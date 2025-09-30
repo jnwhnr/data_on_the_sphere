@@ -18,11 +18,11 @@ It might be necessary to install matplotlib and pillow into the blender env by h
 
 ## run with
 
-# tp
+### tp
 ```
 /Applications/Blender.app/Contents/MacOS/Blender -b -P render_sphere.py -- HR1279_prec_scaling_DJF.tiff presentation --variable tp_dif --vmin -1.2 --vmax 1.2 --locations Europe,Himalayas --effects --do-overlay --overlay-theme dark --overlay-opacity 0.8
 ```
-# t2m
+### t2m
 ```
 /Applications/Blender.app/Contents/MacOS/Blender -b -P render_sphere.py -- HR1279_t2m_2002_2012_JJA.tiff presentation --variable t2m --vmin -30 --vmax 30 --locations Europe,Himalayas --zoomlevel 0.55 --effects --do-overlay --overlay-theme light --overlay-opacity 0.3
 
