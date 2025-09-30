@@ -195,11 +195,11 @@ parser.add_argument("--vmin", default=0, type=float)
 parser.add_argument("--vmax", default=10, type=float)
 
 parser.add_argument("--do-overlay", action="store_true")
-parser.add_argument("--overlay-color", default="black")
+parser.add_argument("--overlay-theme", choices=["dark", "light"], default="light")
 parser.add_argument("--overlay-opacity", default=0, type=float)
 
 
-parser.add_argument("--zoomlevel", default=0)
+parser.add_argument("--zoomlevel", type=float, default=0)
 parser.add_argument("--dof", action="store_true")
 
 parser.add_argument("--effects", action="store_true", help="add some special effect, like glow")
@@ -212,6 +212,14 @@ else:
 
 # parse location string into list
 args.locations = [s.strip() for s in args.locations.split(",")]
+
+# Map overlay theme to colors
+if args.overlay_theme == "dark":
+    overlay_text_color = "white"
+    overlay_background_color = "black"
+elif args.overlay_theme == "light":
+    overlay_text_color = "black"
+    overlay_background_color = "white"
 
 # B) Color Selection - Choose from individual or common libraries
 DISPLAY_COLOR = args.variable 
@@ -228,7 +236,8 @@ MAP_RANGE = {
 COLORBAR_OVERLAY = args.do_overlay  # Create composite images with colorbars
 OVERLAY_SETTINGS = {
     "position": "top_right",        # Colorbar position
-    "colorbar_text": args.overlay_color,       # Text color
+    "colorbar_text": overlay_text_color,       # Text color
+    "background_color": overlay_background_color,  # Background color
     "colorbar_scale": 0.4,          # Scale relative to image height
     "colorbar_steps": 6,            # Number of tick marks
     "padding": 50,                  # Padding from edges
@@ -846,8 +855,17 @@ def create_colorbar_overlay(sphere_image_path, colorbar_image_path, output_path,
             bg_width = new_colorbar_width + (bg_padding * 2)
             bg_height = new_colorbar_height + (bg_padding * 2)
             bg_alpha = int(255 * OVERLAY_SETTINGS["background_opacity"])
-            
-            background = Image.new('RGBA', (bg_width, bg_height), (0, 0, 0, bg_alpha))
+
+            # Use theme background color
+            bg_color_name = OVERLAY_SETTINGS["background_color"]
+            if bg_color_name == "black":
+                bg_rgb = (0, 0, 0, bg_alpha)
+            elif bg_color_name == "white":
+                bg_rgb = (255, 255, 255, bg_alpha)
+            else:
+                bg_rgb = (0, 0, 0, bg_alpha)  # fallback to black
+
+            background = Image.new('RGBA', (bg_width, bg_height), bg_rgb)
             bg_x = bg_padding
             bg_y = bg_padding
             background.paste(colorbar_resized, (bg_x, bg_y), colorbar_resized)
@@ -1075,7 +1093,7 @@ def create_overlays_for_renders(output_dir, input_filename, suffix, obj_type):
     colorbar_text = OVERLAY_SETTINGS["colorbar_text"]
     if colorbar_text == "auto":
         colorbar_text = "white" if WOW_MODE else "black"
-    
+
     from_min_str = format_range_value(MAP_RANGE['from_min'])
     from_max_str = format_range_value(MAP_RANGE['from_max'])
     colorbar_filename = f"{DISPLAY_COLOR}_colorbar{suffix}_{from_min_str}_{from_max_str}_{colorbar_text}.png"
