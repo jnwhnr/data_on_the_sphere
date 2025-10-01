@@ -1,7 +1,7 @@
 # data on the sphere
 
-<img width="1000" height="1000" alt="t2m_JJA_Himalayas_wow_zoom055_-10_+40_colorbar" src="https://github.com/user-attachments/assets/e326a313-ff24-4776-8b99-6dc481fabd54" />
-<img width="1000" height="1000" alt="tp_scaling_DJF_Europe_wow_zoom00_-1 2_+1 2_colorbar" src="https://github.com/user-attachments/assets/9b212d25-a654-46f2-93ad-3ed44b9693b7" />
+<img width="300" height="300" alt="t2m_JJA_Himalayas_wow_zoom055_-10_+40_colorbar" src="https://github.com/user-attachments/assets/e326a313-ff24-4776-8b99-6dc481fabd54" />
+<img width="300" height="300" alt="tp_scaling_DJF_Europe_wow_zoom00_-1 2_+1 2_colorbar" src="https://github.com/user-attachments/assets/9b212d25-a654-46f2-93ad-3ed44b9693b7" />
 
 
 ## install requirements
