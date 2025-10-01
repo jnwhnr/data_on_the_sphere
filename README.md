@@ -1,5 +1,7 @@
 # data on the sphere
 
+<img width="2000" height="2000" alt="t2m_JJA_Himalayas_wow_zoom055_-10_+40_colorbar" src="https://github.com/user-attachments/assets/e326a313-ff24-4776-8b99-6dc481fabd54" />
+
 
 ## install requirements
 
